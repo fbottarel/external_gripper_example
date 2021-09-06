@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="panda_ft_2f">
+
+    <xacro:arg name="robot_name" default="panda" />
+
+    <!-- Establish base link (world ref frame) -->
+    <link name="world" />
+    <!-- <joint name="world_to_link0" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <parent link="world"/>
+        <parent link="panda_link0"/>
+    </joint> -->
+
+    <!-- Robot arm (no hand) -->
+    <xacro:include filename="$(find franka_description)/robots/panda_arm.xacro"/>
+    <xacro:panda_arm arm_id="$(arg robot_name)" connected_to="world" safety_distance="0.03"/>
+
+    <!-- FT300 sensor -->
+    <xacro:include filename="$(find robotiq_ft_sensor)/urdf/robotiq_ft300.urdf.xacro" />
+    <xacro:robotiq_ft300 parent="panda_link8" prefix="">
+        <origin xyz="0 0 -0.004" rpy="0 0 0" />
+    </xacro:robotiq_ft300>
+
+    <!-- 2F gripper, attached to FT300  -->
+    <joint name="2f_gripper_attachment_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 1.5707963268"/>
+        <parent link="robotiq_ft_frame_id"/>
+        <child link="robotiq_arg2f_base_link"/>
+    </joint>
+
+    <!-- 2F85 gripper -->
+    <xacro:include filename="$(find robotiq_2f_85_gripper_visualization)/urdf/robotiq_arg2f_85_model.xacro"/>
+
+    <!-- add a tcp -->
+    <link name="panda_tcp" />
+    <joint name="panda_tcp_joint" type="fixed">
+        <origin xyz="0 0 0.15" rpy="0 0 0" />
+        <parent link="robotiq_arg2f_base_link"/>
+        <child link="panda_tcp"/>
+    </joint>
+
+    <!-- camera -->
+    <!-- TODO: measure precise transform between gripper and camera mount. Maybe we should make a fixed joint to camera_link instead? -->
+    <link name="realsense_bottom_screw_attachment"/>
+    <joint name="realsense_bottom_screw_attachment_joint" type="fixed">
+        <origin xyz="-0.05 0 0" rpy="0 -1.5707963268 0"/>
+        <parent link="robotiq_arg2f_base_link"/>
+        <child link="realsense_bottom_screw_attachment"/>
+    </joint>
+    <xacro:include filename="$(find realsense2_description)/urdf/_d415.urdf.xacro" />
+    <xacro:sensor_d415 parent="realsense_bottom_screw_attachment" use_nominal_extrinsics="false" add_plug="false" use_mesh="true">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </xacro:sensor_d415>
+
+</robot>
